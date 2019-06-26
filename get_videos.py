@@ -40,10 +40,9 @@ def get_videos_init():
         urls_got.append({key:config['URLS_GOT'][key]})
     for key in config['VIDEOS_DOWNLOADED']:
         videos_downloaded.append(key)
-
-#    print(urls_got)
-#    print(episode_num,'\n',episode_downloaded_num)
-#    print(episode_num,videos_downloaded,urls_got)
+    # print(urls_got)
+    print(episode_num,'\n',episode_downloaded_num)
+    # print(episode_num,videos_downloaded,urls_got)
 
 
 class DownloadVideos(threading.Thread):
@@ -81,6 +80,7 @@ def get_video_urls():
     delay = 10
     HD_clicked = False
     url_head = "https://watchfriendsonline.net/watch/friends-"
+#    driver = webdriver.Firefox()
     driver = webdriver.Chrome()
     #for video in videos_downloaded:
 
@@ -88,7 +88,7 @@ def get_video_urls():
         if episode_downloaded_num[section] > episode_num[section]:
             print("dowloaded videos's number bigger than the sections number,section:%d" % section)
             continue
-        if episode_downloaded_num[section] == episode_num[section]:
+        if episode_downloaded_num[section] == episode_num[section] and episode_num[section] != 0:
             continue
         just_in_episode1 = False
         if episode_num[section] == 0:
@@ -103,6 +103,7 @@ def get_video_urls():
             video_list = driver.find_element_by_class_name("episodios")
             lis = video_list.find_elements_by_tag_name("li")
             episode_num[section] = len(lis)
+            config['EPISODE_NUM'][section] = str(len(lis))
             #这个值在获取第一集的时候避免切换url
             just_in_episode1 = True
 
@@ -124,30 +125,17 @@ def get_video_urls():
             time.sleep(15)
 
             video_ele = driver.find_element_by_tag_name("video")
-            print(video_ele.get_attribute("src"))
-            # 选择高清视频
-            if HD_clicked == False:
-                # 鼠标悬浮使得设置图标可见
-                try:
-                    ActionChains(driver).move_to_element(video_ele).perform()
-                except WebDriverException:
-                    # TODO:这里希望点掉弹出窗口，但是并不能成功，测试比较麻烦，我们直接
-                    # 重新获取好了
-                    pop_close = driver.find_element_by_id("AdskeeperC206856Popup-close-btn")
-                    pop_close.click()
-                ActionChains(driver).move_to_element(video_ele).perform()
-                setting_ele = driver.find_element_by_class_name("jw-svg-icon-settings")
-                print("move to element\n")
-#                ActionChains(driver).move_to_element(video_ele).perform()
-#                time.sleep(1)
-                print("setting click\n")
-                ActionChains(driver).move_to_element(video_ele).perform()
-                setting_ele.click()
-                submenu_ele = driver.find_elements_by_class_name("jw-settings-submenu")[3]
-                HD_ele = submenu_ele.find_elements_by_class_name("jw-settings-content-item")[2]
-#            print(HD_ele.text)
-                HD_ele.click()
-                HD_clicked = True
+            # # 选择高清视频
+            # if HD_clicked == False:
+                # # 鼠标悬浮使得设置图标可见
+                # ActionChains(driver).move_to_element(video_ele).perform()
+                # setting_ele = driver.find_element_by_class_name("jw-svg-icon-settings")
+                # setting_ele.click()
+                # submenu_ele = driver.find_elements_by_class_name("jw-settings-submenu")[3]
+                # HD_ele = submenu_ele.find_elements_by_class_name("jw-settings-content-item")[2]
+# #            print(HD_ele.text)
+                # HD_ele.click()
+                # HD_clicked = True
 
             video_url = video_ele.get_attribute("src")
             file_name = "section"+str(section)+"/S"+str(section)+"E"+str(episode)+".mp4"
@@ -155,7 +143,10 @@ def get_video_urls():
                 # print(file_name)
                 # f.write(file_name+":"+video_url+"\n")
         
-            print(file_name,':',video_url)
+            config['URLS_GOT'][str(section)+"_episode"+str(episode)] = video_url
+            with open('get_video.ini','w') as configfile:
+                config.write(configfile)
+
 #            wget.download(video_url,out=)
     driver.close()
 
